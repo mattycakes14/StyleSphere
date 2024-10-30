@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Image, Text, Button } from "react-native";
+import { View, Image, Text, Button, StyleSheet } from "react-native";
 import { useState } from "react";
 type hooperNames = {
   name: string;
@@ -23,7 +23,7 @@ const Hoopers = (props: hooperNames) => {
   };
   return (
     <View>
-      <Text>State tracker for {props.name}</Text>
+      <Text>Shot tracker for {props.name}</Text>
       <Button onPress={incrementShots} title="Press IF he made it"></Button>
       <Text>
         {props.name} currently has made {shotsMade} number of shots
@@ -31,4 +31,10 @@ const Hoopers = (props: hooperNames) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  button: {
+    justifyContent: center;
+  }
+});
 export default index;
