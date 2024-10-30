@@ -9,6 +9,8 @@ const index = () => {
   return (
     <View>
       <Hoopers name="matt"></Hoopers>
+      <Hoopers name="Caleb"></Hoopers>
+      <Hoopers name="Rishit"></Hoopers>
     </View>
   );
 };
