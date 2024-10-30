@@ -3,7 +3,7 @@ import { Text, View } from "react-native";
 export default function Page() {
   return (
     <View>
-      <Text>caleb</Text>
+      <Text>emmalyn</Text>
     </View>
   );
 }
