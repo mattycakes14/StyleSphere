@@ -34,7 +34,10 @@ const Hoopers = (props: hooperNames) => {
 
 const styles = StyleSheet.create({
   button: {
-    justifyContent: center;
-  }
+    alignItems: "center",
+  },
+  text: {
+    alignItems: "center",
+  },
 });
 export default index;
