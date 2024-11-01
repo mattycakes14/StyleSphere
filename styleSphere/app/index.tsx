@@ -1,10 +1,11 @@
 import React from "react";
 import { View, Text, Image } from "react-native";
+import Profiles from "@/components/Profiles";
 
 const Index = () => {
   return (
     <View>
-      <Text>Done</Text>
+      <Profiles></Profiles>
     </View>
   );
 };
