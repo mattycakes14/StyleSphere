@@ -1,7 +1,6 @@
 import React, { useState, useRef } from "react";
 import { View, Text, StyleSheet, ScrollView, PanResponder } from "react-native";
 import Swiper from "react-native-deck-swiper";
-import { WebView } from "react-native-webview";
 
 //each barber profile
 const profiles = [

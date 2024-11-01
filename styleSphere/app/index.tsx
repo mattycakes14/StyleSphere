@@ -1,5 +1,13 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Button,
+  TouchableOpacity,
+} from "react-native";
+import { Link } from "expo-router";
 
 //child component imports
 import Profiles from "@/components/Profiles";
@@ -16,7 +24,9 @@ const Index = () => {
         <Profiles></Profiles>
       </View>
       <View style={styles.navBarContainer}>
-        <NavBar></NavBar>
+        <Link href="/Page">
+          <Button title="Profile"></Button>
+        </Link>
       </View>
     </View>
   );
