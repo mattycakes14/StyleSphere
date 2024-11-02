@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  Button,
-  TouchableOpacity,
-} from "react-native";
+import { View, Text, Image, StyleSheet, Button } from "react-native";
 import { Link } from "expo-router";
 
 //child component imports
