@@ -87,49 +87,51 @@ function StylistModal({
     }
   };
   return (
-    <Modal visible={stylistVisibility} animationType="slide">
+    <Modal visible={stylistVisibility} animationType="fade" transparent={true}>
       <SafeAreaView style={styles.container}>
-        <View style={styles.closeContainer}>
-          <TouchableOpacity onPress={() => setStylistVisibility(false)}>
-            <Image
-              style={{ width: 20, height: 20 }}
-              source={require("../assets/images/close.png")}
-            ></Image>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.textContainer}>
-          <TextInput
-            style={styles.textInputStyle}
-            placeholder="service"
-            placeholderTextColor="gray"
-            onChangeText={(newService) => setService(newService)}
-            value={service}
-          ></TextInput>
-        </View>
-        <View style={styles.textContainer}>
-          <TextInput
-            style={styles.textInputStyle}
-            placeholder="Price range"
-            placeholderTextColor="gray"
-            onChangeText={(newPriceRange) =>
-              setPriceRange(Number(newPriceRange))
-            }
-            value={priceRange.toString()} //change number to String
-          ></TextInput>
-        </View>
-        <View style={styles.textContainer}>
-          <TextInput
-            style={styles.textInputStyle}
-            placeholder="Location"
-            placeholderTextColor="gray"
-            onChangeText={(newLocation) => setLocation(newLocation)}
-            value={location}
-          ></TextInput>
-        </View>
-        <View style={styles.submitContainer}>
-          <TouchableOpacity onPress={submitStylistInfo}>
-            <Text style={styles.submitText}>Submit </Text>
-          </TouchableOpacity>
+        <View style={styles.modalContainer}>
+          <View style={styles.closeContainer}>
+            <TouchableOpacity onPress={() => setStylistVisibility(false)}>
+              <Image
+                style={{ width: 20, height: 20 }}
+                source={require("../assets/images/close.png")}
+              ></Image>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.textContainer}>
+            <TextInput
+              style={styles.textInputStyle}
+              placeholder="service"
+              placeholderTextColor="gray"
+              onChangeText={(newService) => setService(newService)}
+              value={service}
+            ></TextInput>
+          </View>
+          <View style={styles.textContainer}>
+            <TextInput
+              style={styles.textInputStyle}
+              placeholder="Price range"
+              placeholderTextColor="gray"
+              onChangeText={(newPriceRange) =>
+                setPriceRange(Number(newPriceRange))
+              }
+              value={priceRange.toString()} //change number to String
+            ></TextInput>
+          </View>
+          <View style={styles.textContainer}>
+            <TextInput
+              style={styles.textInputStyle}
+              placeholder="Location"
+              placeholderTextColor="gray"
+              onChangeText={(newLocation) => setLocation(newLocation)}
+              value={location}
+            ></TextInput>
+          </View>
+          <View style={styles.submitContainer}>
+            <TouchableOpacity onPress={submitStylistInfo}>
+              <Text style={styles.submitText}>Submit </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </Modal>
@@ -139,13 +141,23 @@ function StylistModal({
 const styles = StyleSheet.create({
   closeContainer: {
     position: "absolute",
-    top: 50,
-    left: 30,
+    top: 20,
+    left: 10,
   },
   container: {
     flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    flex: 0.5,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    width: 300,
+    height: 400,
   },
   textInputStyle: {
     borderWidth: 0.5,
