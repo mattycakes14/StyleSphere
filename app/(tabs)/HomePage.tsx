@@ -21,6 +21,8 @@ type ProfileData = {
 };
 function HomePage() {
   const [stylistData, setStylistData] = useState<ProfileData[]>([]);
+  const auth = getAuth();
+  const userId = auth.currentUser?.uid;
   //reference to collection
   const stylistInfo = collection(db, "profile");
   //query the data from the collection
