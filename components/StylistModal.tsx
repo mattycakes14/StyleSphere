@@ -34,7 +34,6 @@ function StylistModal({
   const [service, setService] = useState("");
   const [priceRange, setPriceRange] = useState(0);
   const [location, setLocation] = useState("");
-
   //reference to collection
   const stylistInfo = collection(db, "profile");
   //get the user id
