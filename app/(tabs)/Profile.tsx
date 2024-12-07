@@ -20,6 +20,7 @@ import ProfileModal from "../../components/ProfileModal";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { collection, query, getDocs, where } from "firebase/firestore";
 import { db } from "@/config/firebase";
+import * as Location from "expo-location";
 const Profile = () => {
   //visibility for stylist setting
   const [stylistVisibility, setStylistVisibility] = useState<boolean>(false);
@@ -32,9 +33,23 @@ const Profile = () => {
   //state for user and profile modal
   const [profileModal, setProfileModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-
+  const [location, setLocation] = useState();
   //collection ref
   const accountInfo = collection(db, "AccountInfo");
+  //ask for location permissions
+  //ask for location permission
+  useEffect(() => {
+    const getPermission = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("please grant permissions");
+        return;
+      }
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      console.log(currentLocation);
+    };
+    getPermission();
+  }, []);
   useEffect(() => {
     const fetchUsername = async () => {
       try {

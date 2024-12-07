@@ -9,11 +9,26 @@ import {
 } from "react-native";
 import SignIn from "./SignIn";
 import { useFonts } from "expo-font";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
+import * as Location from "expo-location";
 function Welcome() {
   const [signInVisible, setSignInVisible] = useState<boolean>(false);
-
+  const [location, setLocation] = useState();
+  //user permissions
+  //ask for location permission
+  useEffect(() => {
+    const getPermission = async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("please grant permissions");
+        return;
+      }
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      console.log(currentLocation);
+    };
+    getPermission();
+  }, []);
   let [fontsLoaded] = useFonts({
     "Inter_24pt-BoldItalic": require("../assets/fonts/Inter_24pt-BoldItalic.ttf"),
   });
