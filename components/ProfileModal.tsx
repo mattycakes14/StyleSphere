@@ -22,6 +22,7 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
+import * as Location from "expo-location";
 function ProfileModal({
   profileModal,
   setProfileModal,
@@ -35,9 +36,14 @@ function ProfileModal({
   const [username, setUsername] = useState("");
   const [pronouns, setPronouns] = useState("");
   const [phoneNum, setPhoneNum] = useState<number>(0);
+  const [address, setAddress] = useState("");
+  const [longitude, setLongitude] = useState<number>();
+  const [latitude, setLatitude] = useState<number>();
   const email = auth.currentUser?.email;
-  //collection ref
+  //collection ref for AccountInfo collection
   const accountInfoRef = collection(db, "AccountInfo");
+  //collection ref for Stylist Info collection
+  const stylistRef = collection(db, "stylistInfo");
   //get pre-text username/pronouns
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +58,7 @@ function ProfileModal({
           setUsername(userData.username);
           setPronouns(userData.pronouns);
           setPhoneNum(userData.phoneNum);
+          setAddress(userData.address);
         }
       } catch (err) {
         console.error(err);
@@ -59,10 +66,17 @@ function ProfileModal({
     };
     fetchData();
   }, [auth.currentUser?.uid]);
-  //submitting username/pronouns to "AccountInfo" collection db in firebase
+  //Updating/submitting info to AccountInfo/ stylistInfo collection
   const addInfo = async () => {
     try {
-      //get the user object from the collection
+      //reverse geocode location (address -> geocode)
+      const geoCoded = await Location.geocodeAsync(address);
+      console.log(address);
+      const latitude = geoCoded[0].latitude;
+      const longitude = geoCoded[0].longitude;
+      setLatitude(latitude);
+      setLongitude(longitude);
+      //get the user object from the collection(filter data)
       const q = query(
         accountInfoRef,
         where("userId", "==", auth.currentUser?.uid)
@@ -79,6 +93,9 @@ function ProfileModal({
           username: username,
           pronouns: pronouns,
           phoneNum: phoneNum,
+          address: address,
+          latitude: latitude,
+          longitude: longitude,
           userId: auth.currentUser?.uid,
         });
         Alert.alert("Success", "Information submitted successfully!");
@@ -88,6 +105,9 @@ function ProfileModal({
           username: username,
           pronouns: pronouns,
           phoneNum: phoneNum,
+          address: address,
+          latitude: latitude,
+          longitude: longitude,
         });
         Alert.alert("Updated success!", "Info has been updated!");
       }
@@ -142,8 +162,21 @@ function ProfileModal({
             value={String(phoneNum)}
           ></TextInput>
         </View>
+        <View style={styles.accountInfoSettingContainer}>
+          <Text style={styles.accountInfoSettingText}>Location</Text>
+          <TextInput
+            style={styles.textInput}
+            value={address}
+            onChangeText={(newAddress) => setAddress(newAddress)}
+          ></TextInput>
+          <View />
+        </View>
         <View style={styles.updateContainer}>
-          <TouchableOpacity onPress={addInfo}>
+          <TouchableOpacity
+            onPress={() => {
+              addInfo();
+            }}
+          >
             <Text style={styles.updateText}>Update</Text>
           </TouchableOpacity>
         </View>

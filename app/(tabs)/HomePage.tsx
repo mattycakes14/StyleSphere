@@ -11,8 +11,7 @@ import {
 } from "react-native";
 import { db } from "@/config/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import axios from "axios";
-import * as Location from "expo-location";
+
 // Declare types for querying data
 type ProfileData = {
   id: string;
@@ -25,23 +24,10 @@ function HomePage() {
   const [stylistData, setStylistData] = useState<ProfileData[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProfileData | null>(null);
-  const [location, setLocation] = useState();
+
   // Reference to collection
   const stylistInfo = collection(db, "profile");
 
-  //ask for location permission
-  useEffect(() => {
-    const getPermission = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.log("please grant permissions");
-        return;
-      }
-      let currentLocation = await Location.getCurrentPositionAsync({});
-      console.log(currentLocation);
-    };
-    getPermission();
-  }, []);
   // Query the data from the collection
   useEffect(() => {
     const fetchStylistData = async () => {
