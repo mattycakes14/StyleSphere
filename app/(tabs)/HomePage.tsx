@@ -96,7 +96,9 @@ function HomePage() {
                     </Text>
                     <Text
                       style={{
-                        fontSize: 40,
+                        fontSize: 30,
+                        top: 30,
+                        marginLeft: 100,
                         fontFamily: "SFPRODISPLAYBOLD",
                       }}
                     >
