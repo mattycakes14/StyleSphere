@@ -48,6 +48,9 @@ function ProfileModal({
   const [latitude, setLatitude] = useState<number>();
   const [success, setSuccess] = useState(false);
   const [url, setUrl] = useState<string>();
+  const [progress, setProgress] = useState(0);
+  const [progressModal, setProgressModal] = useState(false);
+  const [uploaded, isUploaded] = useState(false);
   const email = auth.currentUser?.email;
   //collection ref for AccountInfo collection
   const accountInfoRef = collection(db, "AccountInfo");
@@ -105,6 +108,7 @@ function ProfileModal({
           address: address,
           latitude: latitude,
           longitude: longitude,
+          profilePic: url,
           userId: auth.currentUser?.uid,
         });
         Alert.alert("Success", "Information submitted successfully!");
@@ -116,6 +120,7 @@ function ProfileModal({
           phoneNum: phoneNum,
           address: address,
           latitude: latitude,
+          profilePic: url,
           longitude: longitude,
         });
         Alert.alert("Updated success!", "Info has been updated!");
@@ -152,24 +157,41 @@ function ProfileModal({
         const storageRef = ref(storage, "images/" + user);
 
         const uploadTask = uploadBytesResumable(storageRef, blob);
-        fetchData();
-        uploadTask.on("state_changed", null, (error) => {
-          console.error("Upload failed:", error);
-          console.error("Error payload:", error.serverResponse);
-        });
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress = Math.floor(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            );
+            setProgressModal(true);
+            setProgress(progress);
+            console.log(`File is ${progress}% done`);
+            if (snapshot.bytesTransferred == snapshot.totalBytes) {
+              console.log("Upload completed!");
+              setProgressModal(false);
+              isUploaded(true);
+            }
+          },
+          (error) => {
+            console.error(error);
+          }
+        );
       } catch (err) {
         console.error(err);
       }
     }
   };
+  useEffect(() => {
+    fetchData();
+  }, [uploaded]);
   const fetchData = async () => {
     try {
       const imageRef = ref(storage, "images/" + user);
       const url = await getDownloadURL(imageRef);
-      console.log(url);
-      console.log(typeof url);
+      console.log("Profile updated");
       setSuccess(true);
       setUrl(url);
+      addInfo();
     } catch (err) {
       console.error(err);
     }
@@ -187,21 +209,27 @@ function ProfileModal({
         </View>
         <Text style={styles.accountInfoStyle}>Account Info</Text>
         <View style={{ marginLeft: 20 }}>
-          {success ? (
-            <Image
-              source={{ uri: url }}
-              style={{ width: 150, height: 150, borderRadius: 150 }}
-            />
-          ) : (
-            <TouchableOpacity onPress={selectImage}>
+          <TouchableOpacity onPress={selectImage}>
+            {success ? (
+              <Image
+                source={{ uri: url }}
+                style={{ width: 150, height: 150, borderRadius: 150 }}
+              />
+            ) : (
               <Image
                 style={{ width: 120, height: 120 }}
                 source={require("../assets/images/user.png")}
               />
-            </TouchableOpacity>
-          )}
+            )}
+          </TouchableOpacity>
         </View>
-        <Button title="change photo" onPress={selectImage}></Button>
+        <Modal visible={progressModal} transparent={true}>
+          <View style={styles.progressModalOverlay}>
+            <View style={styles.progressModalContainer}>
+              <Text>Image is {progress}% done!</Text>
+            </View>
+          </View>
+        </Modal>
         <View style={styles.accountInfoSettingContainer}>
           <Text style={styles.emailText}> Email: {email}</Text>
         </View>
@@ -296,6 +324,20 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontFamily: "Inter_24pt-BoldItalic",
+  },
+  progressModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  progressModalContainer: {
+    flex: 0.5,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    width: 200,
+    borderRadius: 50,
   },
 });
 export default ProfileModal;
