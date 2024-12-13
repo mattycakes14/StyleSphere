@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC36Gvy6qpTrWiq1W14OKB5FdNUBOW2ryA",
   authDomain: "rebuild-style-sphere.firebaseapp.com",
   projectId: "rebuild-style-sphere",
-  storageBucket: "rebuild-style-sphere.appspot.com", //CORRECT STORAGEBUCKET URL
+  storageBucket: "test-f1c9d.firebasestorage.app", //test project storageBucket
   messagingSenderId: "850122440832",
   appId: "1:850122440832:web:485aea473959bdce9be665",
   measurementId: "G-ZVEQ6JRCQJ",

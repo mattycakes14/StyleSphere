@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   Button,
+  Touchable,
 } from "react-native";
 import { getAuth } from "firebase/auth";
 import { db } from "../config/firebase";
@@ -23,6 +24,9 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import * as Location from "expo-location";
+import * as ImagePicker from "expo-image-picker";
+import { storage } from "../config/firebase";
+import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
 function ProfileModal({
   profileModal,
   setProfileModal,
@@ -30,8 +34,11 @@ function ProfileModal({
   profileModal: boolean;
   setProfileModal: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  //fetch the user
+  //get user id
   const auth = getAuth();
+  const user = auth.currentUser?.uid;
+  //state for image rendering
+  const [image, setImage] = useState("");
   //get the state of username, pronouns, email
   const [username, setUsername] = useState("");
   const [pronouns, setPronouns] = useState("");
@@ -39,6 +46,8 @@ function ProfileModal({
   const [address, setAddress] = useState("");
   const [longitude, setLongitude] = useState<number>();
   const [latitude, setLatitude] = useState<number>();
+  const [success, setSuccess] = useState(false);
+  const [url, setUrl] = useState<string>();
   const email = auth.currentUser?.email;
   //collection ref for AccountInfo collection
   const accountInfoRef = collection(db, "AccountInfo");
@@ -115,6 +124,56 @@ function ProfileModal({
       console.error(err);
     }
   };
+  const selectImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      console.log("No Permission");
+      return;
+    }
+    const pickerResult = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeImages,
+    });
+
+    if (pickerResult.canceled) {
+      console.log("Photo albumn cancled");
+    } else {
+      //if successful get the uri from the object array
+      const uri = pickerResult.assets[0].uri;
+
+      //upload image
+      const responseData = await fetch(uri);
+      const blob = await responseData.blob();
+      console.log(blob);
+      console.log(blob.type);
+      console.log(blob.size);
+      try {
+        //storage reference
+        const storageRef = ref(storage, "images/" + user);
+
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+        fetchData();
+        uploadTask.on("state_changed", null, (error) => {
+          console.error("Upload failed:", error);
+          console.error("Error payload:", error.serverResponse);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+  const fetchData = async () => {
+    try {
+      const imageRef = ref(storage, "images/" + user);
+      const url = await getDownloadURL(imageRef);
+      console.log(url);
+      console.log(typeof url);
+      setSuccess(true);
+      setUrl(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <Modal transparent={true} visible={profileModal} animationType="slide">
       <SafeAreaView style={styles.modalContainer}>
@@ -128,13 +187,21 @@ function ProfileModal({
         </View>
         <Text style={styles.accountInfoStyle}>Account Info</Text>
         <View style={{ marginLeft: 20 }}>
-          <TouchableOpacity>
+          {success ? (
             <Image
-              style={{ width: 120, height: 120 }}
-              source={require("../assets/images/user.png")}
+              source={{ uri: url }}
+              style={{ width: 150, height: 150, borderRadius: 150 }}
             />
-          </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={selectImage}>
+              <Image
+                style={{ width: 120, height: 120 }}
+                source={require("../assets/images/user.png")}
+              />
+            </TouchableOpacity>
+          )}
         </View>
+        <Button title="change photo" onPress={selectImage}></Button>
         <View style={styles.accountInfoSettingContainer}>
           <Text style={styles.emailText}> Email: {email}</Text>
         </View>
