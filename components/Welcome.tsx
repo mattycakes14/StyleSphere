@@ -19,6 +19,8 @@ function Welcome() {
 
   let [fontsLoaded] = useFonts({
     "Inter_24pt-BoldItalic": require("../assets/fonts/Inter_24pt-BoldItalic.ttf"),
+    SFPRODISPLAYBLACKITALIC: require("../assets/fonts/SFPRODISPLAYBLACKITALIC.otf"),
+    SFPRODISPLAYBOLD: require("../assets/fonts/SFPRODISPLAYBOLD.otf"),
   });
   if (!fontsLoaded) {
     return <Text>Font is loading</Text>;

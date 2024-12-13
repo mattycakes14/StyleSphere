@@ -8,6 +8,7 @@ import {
   Modal,
   TouchableOpacity,
   Button,
+  Image,
 } from "react-native";
 import { db } from "@/config/firebase";
 import { collection, getDocs } from "firebase/firestore";
@@ -23,6 +24,7 @@ type ProfileData = {
   username: string;
   service: string;
   priceRange: number;
+  profilePic: string;
 };
 
 function HomePage() {
@@ -48,15 +50,16 @@ function HomePage() {
           address: doc.data().address,
           service: doc.data().service,
           priceRange: doc.data().priceRange,
+          profilePic: doc.data().profilePic,
         }));
         setStylistData(convertData);
+        console.log(convertData);
       } catch (error) {
         console.error(error);
       }
     };
     fetchStylistData();
   }, []); // Dependency of [] (called once per mount)
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {stylistData && stylistData.length > 0 ? (
@@ -73,7 +76,33 @@ function HomePage() {
                 }}
               >
                 <View style={styles.flatListContainer}>
-                  <Text style={{ padding: 5 }}>Username: {item.username}</Text>
+                  <View style={styles.userImage}>
+                    {item.profilePic.length > 0 ? (
+                      <Image
+                        source={{ uri: item.profilePic }}
+                        style={{ width: 50, height: 50, borderRadius: 50 }}
+                      />
+                    ) : (
+                      <Image source={require("../../assets/images/user.png")} />
+                    )}
+                    <Text
+                      style={{
+                        padding: 5,
+                        fontFamily: "SFPRODISPLAYBLACKITALIC",
+                        color: "black",
+                      }}
+                    >
+                      {item.username}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 40,
+                        fontFamily: "SFPRODISPLAYBOLD",
+                      }}
+                    >
+                      ${item.priceRange}
+                    </Text>
+                  </View>
                   <Text style={{ padding: 5 }}>Located: {item.address}</Text>
                   <Text style={{ padding: 5 }}>Service: {item.service}</Text>
                 </View>
@@ -160,5 +189,8 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "white",
     fontSize: 16,
+  },
+  userImage: {
+    flexDirection: "row",
   },
 });

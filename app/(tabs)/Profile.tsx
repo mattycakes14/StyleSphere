@@ -18,7 +18,13 @@ import { signOut, getAuth } from "firebase/auth";
 import StylistModal from "../../components/StylistModal";
 import ProfileModal from "../../components/ProfileModal";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { collection, query, getDocs, where } from "firebase/firestore";
+import {
+  collection,
+  query,
+  getDocs,
+  where,
+  snapshotEqual,
+} from "firebase/firestore";
 import { db } from "@/config/firebase";
 
 const Profile = () => {
@@ -33,10 +39,10 @@ const Profile = () => {
   //state for user and profile modal
   const [profileModal, setProfileModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-
+  const [profilePic, hasProfilePic] = useState(false);
+  const [uri, setUri] = useState("");
   //collection ref
   const accountInfo = collection(db, "AccountInfo");
-
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -54,7 +60,26 @@ const Profile = () => {
     };
     fetchUsername();
   }, []);
-
+  useEffect(() => {
+    const getProfilePic = async () => {
+      const q = query(accountInfo, where("userId", "==", userId));
+      const snapShot = await getDocs(q);
+      try {
+        if (!snapShot.empty) {
+          snapShot.forEach((doc) => {
+            const profilePic = doc.data().profilePic;
+            setUri(profilePic);
+            hasProfilePic(true);
+          });
+        } else {
+          console.log("no user found");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    getProfilePic();
+  }, []);
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -80,10 +105,17 @@ const Profile = () => {
         </View>
         <View style={styles.profilePicContainer}>
           <TouchableOpacity onPress={() => setProfileModal(true)}>
-            <Image
-              style={styles.imageStyle}
-              source={require("../../assets/images/user.png")}
-            />
+            {profilePic ? (
+              <Image
+                source={{ uri: uri }}
+                style={styles.imageStyleProfilePic}
+              />
+            ) : (
+              <Image
+                style={styles.imageStyle}
+                source={require("../../assets/images/user.png")}
+              />
+            )}
           </TouchableOpacity>
         </View>
         <ProfileModal
@@ -129,6 +161,11 @@ const styles = StyleSheet.create({
   imageStyle: {
     width: 80,
     height: 80,
+  },
+  imageStyleProfilePic: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
   },
   welcomeBackContainer: {
     flex: 0.2,
