@@ -27,6 +27,7 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { storage } from "../config/firebase";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
+import Test from "./Test";
 function ProfileModal({
   profileModal,
   setProfileModal,
