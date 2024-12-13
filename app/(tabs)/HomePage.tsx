@@ -11,13 +11,18 @@ import {
 } from "react-native";
 import { db } from "@/config/firebase";
 import { collection, getDocs } from "firebase/firestore";
-
+import openMap from "react-native-open-maps";
 // Declare types for querying data
 type ProfileData = {
   id: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phoneNum: number;
+  pronouns: string;
+  username: string;
   service: string;
   priceRange: number;
-  location: string;
 };
 
 function HomePage() {
@@ -26,19 +31,23 @@ function HomePage() {
   const [selectedItem, setSelectedItem] = useState<ProfileData | null>(null);
 
   // Reference to collection
-  const stylistInfo = collection(db, "profile");
-
+  const accountInfo = collection(db, "AccountInfo");
   // Query the data from the collection
   useEffect(() => {
     const fetchStylistData = async () => {
       try {
-        const querySnapshot = await getDocs(stylistInfo); // Get the snapshot
+        const querySnapshot = await getDocs(accountInfo); // Get the snapshot
         const convertData = querySnapshot.docs.map((doc) => ({
           // Convert data into array of objects
           id: doc.id,
+          username: doc.data().username,
+          latitude: doc.data().latitude,
+          longitude: doc.data().longitude,
+          phoneNum: doc.data().phoneNum,
+          pronouns: doc.data().pronouns,
+          address: doc.data().address,
           service: doc.data().service,
           priceRange: doc.data().priceRange,
-          location: doc.data().location,
         }));
         setStylistData(convertData);
       } catch (error) {
@@ -64,10 +73,8 @@ function HomePage() {
                 }}
               >
                 <View style={styles.flatListContainer}>
-                  <Text style={{ padding: 5 }}>Location: {item.location}</Text>
-                  <Text style={{ padding: 5 }}>
-                    Price Range: {item.priceRange}
-                  </Text>
+                  <Text style={{ padding: 5 }}>Username: {item.username}</Text>
+                  <Text style={{ padding: 5 }}>Located: {item.address}</Text>
                   <Text style={{ padding: 5 }}>Service: {item.service}</Text>
                 </View>
               </TouchableOpacity>
@@ -85,8 +92,17 @@ function HomePage() {
             >
               <View style={styles.modalContent}>
                 <Text style={styles.modalText}>
-                  Location: {selectedItem?.location}
+                  Location: {selectedItem?.address}
                 </Text>
+                <Button
+                  title="Map to Location"
+                  onPress={() =>
+                    openMap({
+                      latitude: selectedItem?.latitude,
+                      longitude: selectedItem?.longitude,
+                    })
+                  }
+                ></Button>
                 <Text style={styles.modalText}>
                   Price Range: {selectedItem?.priceRange}
                 </Text>

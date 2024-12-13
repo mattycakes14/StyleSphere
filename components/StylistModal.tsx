@@ -32,10 +32,9 @@ function StylistModal({
   const auth = getAuth();
   //getting state of input
   const [service, setService] = useState("");
-  const [priceRange, setPriceRange] = useState(0);
-  const [location, setLocation] = useState("");
+  const [priceRange, setPriceRange] = useState<number>();
   //reference to collection
-  const stylistInfo = collection(db, "profile");
+  const stylistInfo = collection(db, "AccountInfo");
   //get the user id
   const userId = auth.currentUser?.uid;
   //get pre-text data
@@ -48,7 +47,6 @@ function StylistModal({
           const docRef = querySnapshot.docs[0].data();
           setService(docRef.service);
           setPriceRange(docRef.priceRange);
-          setLocation(docRef.location);
         }
       } catch (err) {
         console.error(err);
@@ -64,7 +62,6 @@ function StylistModal({
       if (!querySnapshot.empty) {
         const docRef = querySnapshot.docs[0].ref;
         await updateDoc(docRef, {
-          location: location,
           service: service,
           priceRange: priceRange,
         });
@@ -72,7 +69,6 @@ function StylistModal({
       } else {
         await addDoc(stylistInfo, {
           service: service,
-          location: location,
           priceRange: priceRange,
           userId: userId,
         });
@@ -114,16 +110,7 @@ function StylistModal({
               onChangeText={(newPriceRange) =>
                 setPriceRange(Number(newPriceRange))
               }
-              value={priceRange.toString()} //change number to String
-            ></TextInput>
-          </View>
-          <View style={styles.textContainer}>
-            <TextInput
-              style={styles.textInputStyle}
-              placeholder="Location"
-              placeholderTextColor="gray"
-              onChangeText={(newLocation) => setLocation(newLocation)}
-              value={location}
+              value={String(priceRange)} //change number to String
             ></TextInput>
           </View>
           <View style={styles.submitContainer}>
