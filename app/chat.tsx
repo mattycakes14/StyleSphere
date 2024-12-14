@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useLayoutEffect } from "react";
 import {
   SafeAreaView,
   StyleSheet,
@@ -7,12 +7,69 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import {
+  addDoc,
+  query,
+  orderBy,
+  collection,
+  onSnapshot,
+} from "firebase/firestore";
+import { db } from "@/config/firebase";
 import { GiftedChat } from "react-native-gifted-chat";
 import { useRouter } from "expo-router";
+import { getAuth } from "firebase/auth";
+
+type Message = {
+  _id: string;
+  createdAt: Date | string;
+  text: string;
+  user: {
+    _id: string;
+    name?: string;
+    avatar?: string;
+  };
+};
 
 function Chat({ username }: { username: string }) {
   console.log(username);
   const router = useRouter();
+  const auth = getAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useLayoutEffect(() => {
+    const collectionRef = collection(db, "chats");
+    const q = query(collectionRef, orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log("snapshot");
+      setMessages(
+        snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            _id: doc.id,
+            createdAt: data?.createdAt?.toDate?.() || data?.createdAt,
+            text: data?.text,
+            user: data?.user,
+          };
+        })
+      );
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const onSend = useCallback((messages = []) => {
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, messages)
+    );
+    const { _id, createdAt, text, user } = messages[0];
+    addDoc(collection(db, "chats"), {
+      _id,
+      createdAt,
+      text,
+      user,
+    });
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,11 +87,16 @@ function Chat({ username }: { username: string }) {
           <Text>{username}</Text>
         </View>
       </View>
-      <GiftedChat />
+      <GiftedChat
+        messages={messages}
+        onSend={(messages) => onSend(messages)}
+        user={{
+          _id: auth.currentUser?.email,
+        }}
+      />
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: "row",
