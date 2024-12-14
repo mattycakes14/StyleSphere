@@ -191,7 +191,6 @@ function ProfileModal({
       const url = await getDownloadURL(imageRef);
       console.log("Profile updated");
       setSuccess(true);
-      console.log(url);
       setUrl(url);
       addInfo();
     } catch (err) {

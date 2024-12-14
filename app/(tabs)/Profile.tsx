@@ -10,6 +10,7 @@ import {
   Image,
   Modal,
   ScrollView,
+  FlatList,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -40,6 +41,10 @@ const Profile = () => {
   const [profileModal, setProfileModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [profilePic, hasProfilePic] = useState(false);
+  const data = [
+    { id: 1, category: "Adjust Stylist Info" },
+    { id: 2, category: "Logout" },
+  ];
   const [uri, setUri] = useState("");
   //collection ref
   const accountInfo = collection(db, "AccountInfo");
@@ -119,33 +124,31 @@ const Profile = () => {
           profileModal={profileModal}
           setProfileModal={setProfileModal}
         ></ProfileModal>
-        <View style={styles.stylistInfoContainer}>
-          <TouchableOpacity onPress={() => setStylistVisibility(true)}>
-            <Text style={styles.stylistInfoText}>
-              Adjust Stylist Information
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <StylistModal
-          stylistVisibility={stylistVisibility}
-          setStylistVisibility={setStylistVisibility}
-        ></StylistModal>
-        <Button
-          title="Logout"
-          color="red"
-          onPress={() =>
-            Alert.alert("Log Out", "Are you sure you want to logout?", [
-              {
-                text: "LogOut",
-                onPress: handleLogout,
-              },
-              {
-                text: "Cancel",
-                onPress: () => console.log("cancel log out tab"),
-              },
-            ])
-          }
-        ></Button>
+        <FlatList
+          data={data}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => {
+                item.category === "Logout"
+                  ? Alert.alert("Log Out", "Are you sure you want to logout?", [
+                      {
+                        text: "LogOut",
+                        onPress: handleLogout,
+                      },
+                      {
+                        text: "Cancel",
+                        onPress: () => console.log("cancel log out tab"),
+                      },
+                    ])
+                  : console.log(item.category);
+              }}
+            >
+              <View style={styles.stylistInfoContainer}>
+                <Text>{item.category}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
       </SafeAreaView>
     </GestureHandlerRootView>
   );
@@ -184,9 +187,9 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   stylistInfoContainer: {
-    flex: 0.1,
-    justifyContent: "center",
-    marginLeft: 30,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
   },
 });
 
