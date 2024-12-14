@@ -23,7 +23,7 @@ import {
   query,
   getDocs,
   where,
-  snapshotEqual,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 
@@ -43,6 +43,7 @@ const Profile = () => {
   const [uri, setUri] = useState("");
   //collection ref
   const accountInfo = collection(db, "AccountInfo");
+  //update state of username by filtering docs and getting username field val
   useEffect(() => {
     const fetchUsername = async () => {
       try {
@@ -60,26 +61,22 @@ const Profile = () => {
     };
     fetchUsername();
   }, []);
+  //handle updates for download url for profile pic
   useEffect(() => {
-    const getProfilePic = async () => {
-      const q = query(accountInfo, where("userId", "==", userId));
-      const snapShot = await getDocs(q);
-      try {
-        if (!snapShot.empty) {
-          snapShot.forEach((doc) => {
-            const profilePic = doc.data().profilePic;
-            setUri(profilePic);
-            hasProfilePic(true);
-          });
-        } else {
-          console.log("no user found");
-        }
-      } catch (err) {
-        console.error(err);
+    const userDoc = query(accountInfo, where("userId", "==", userId)); //find doc based on userId
+    const unsubscribe = onSnapshot(userDoc, (snapshot) => {
+      if (!snapshot.empty) {
+        //callback function to be executed per change
+        snapshot.docs.map((doc) => {
+          const newUri = doc.data().profilePic;
+          setUri(newUri); //get the updated uri
+          hasProfilePic(true);
+          console.log(uri);
+        });
       }
-    };
-    getProfilePic();
-  }, []);
+    });
+    return () => unsubscribe(); //clean up function: component unmounts we stop the listener
+  }, [userId]); //clean up listener and update doc data based on userId
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -89,7 +86,7 @@ const Profile = () => {
     }
     navigation.navigate("index");
   };
-
+  console.log(uri);
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={styles.container}>

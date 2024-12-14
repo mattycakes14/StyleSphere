@@ -13,7 +13,7 @@ import {
 import { db } from "@/config/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import openMap from "react-native-open-maps";
-// Declare types for querying data
+import { Calendar, CalendarList, Agenda } from "react-native-calendars"; // Declare types for querying data
 type ProfileData = {
   id: string;
   address: string;
@@ -31,7 +31,7 @@ function HomePage() {
   const [stylistData, setStylistData] = useState<ProfileData[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProfileData | null>(null);
-
+  const [calendarVisible, setCalendarVisible] = useState(false);
   // Reference to collection
   const accountInfo = collection(db, "AccountInfo");
   // Query the data from the collection
@@ -134,6 +134,30 @@ function HomePage() {
                     })
                   }
                 ></Button>
+                <TouchableOpacity onPress={() => setCalendarVisible(true)}>
+                  <Text>See Availability</Text>
+                </TouchableOpacity>
+                <Modal
+                  visible={calendarVisible}
+                  transparent={true}
+                  animationType="fade"
+                >
+                  <View style={styles.calendarOverlay}>
+                    <View style={styles.calendarModal}>
+                      <TouchableOpacity
+                        onPress={() => setCalendarVisible(false)}
+                      ></TouchableOpacity>
+                      <Calendar
+                        style={{ padding: 20, width: 300, borderRadius: 10 }}
+                        onDayPress={(day) => {
+                          console.log(`selected day is ${day}%`);
+                          console.log(typeof day);
+                          setCalendarVisible(false);
+                        }}
+                      />
+                    </View>
+                  </View>
+                </Modal>
                 <Text style={styles.modalText}>
                   Price Range: {selectedItem?.priceRange}
                 </Text>
@@ -194,5 +218,14 @@ const styles = StyleSheet.create({
   },
   userImage: {
     flexDirection: "row",
+  },
+  calendarOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  calendarModal: {
+    marginTop: 200,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

@@ -27,7 +27,7 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { storage } from "../config/firebase";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
-import Test from "./Test";
+
 function ProfileModal({
   profileModal,
   setProfileModal,
@@ -51,7 +51,7 @@ function ProfileModal({
   const [url, setUrl] = useState<string>();
   const [progress, setProgress] = useState(0);
   const [progressModal, setProgressModal] = useState(false);
-  const [uploaded, isUploaded] = useState(false);
+  const [uploaded, setUploaded] = useState(0);
   const email = auth.currentUser?.email;
   //collection ref for AccountInfo collection
   const accountInfoRef = collection(db, "AccountInfo");
@@ -170,7 +170,7 @@ function ProfileModal({
             if (snapshot.bytesTransferred == snapshot.totalBytes) {
               console.log("Upload completed!");
               setProgressModal(false);
-              isUploaded(true);
+              setUploaded(uploaded + 1);
             }
           },
           (error) => {
@@ -191,6 +191,7 @@ function ProfileModal({
       const url = await getDownloadURL(imageRef);
       console.log("Profile updated");
       setSuccess(true);
+      console.log(url);
       setUrl(url);
       addInfo();
     } catch (err) {
