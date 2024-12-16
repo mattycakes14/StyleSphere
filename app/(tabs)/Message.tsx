@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import {
   SafeAreaView,
@@ -15,6 +15,7 @@ import {
 import { db } from "../../config/firebase";
 import { getDocs, collection } from "firebase/firestore";
 import { useRouter } from "expo-router";
+import { debounce, filter } from "lodash";
 type ProfileData = {
   username: string;
   profilePic: string;
@@ -42,12 +43,13 @@ function Message() {
     };
     getUsers();
   }, []);
-  useEffect(() => {
+  const filterSearch = () => {
     const filtered = data.filter((item) =>
       item.username.toLowerCase().includes(search.toLowerCase())
     );
+    console.log("Function executed");
     setFilteredData(filtered);
-  }, [data, search]);
+  };
   return (
     <SafeAreaView style={styles.container}>
       <Image
@@ -58,7 +60,10 @@ function Message() {
         style={styles.searchBar}
         placeholder="Search for users"
         value={search}
-        onChangeText={(newText) => setSearch(newText)}
+        onChangeText={(newText) => {
+          setSearch(newText);
+          filterSearch();
+        }}
       ></TextInput>
       <FlatList
         data={filteredData}
@@ -107,7 +112,7 @@ const styles = StyleSheet.create({
     top: 55,
   },
   listContainer: {
-    backgroundColor: "orange",
+    backgroundColor: "white",
     borderBottomWidth: 1,
     padding: 10,
   },

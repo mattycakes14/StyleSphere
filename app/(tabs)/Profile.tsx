@@ -11,12 +11,12 @@ import {
   Modal,
   ScrollView,
   FlatList,
+  TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/types";
 import { signOut, getAuth } from "firebase/auth";
-import StylistModal from "../../components/StylistModal";
 import ProfileModal from "../../components/ProfileModal";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -27,7 +27,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-
+import { debounce } from "lodash";
 const Profile = () => {
   //visibility for stylist setting
   const [stylistVisibility, setStylistVisibility] = useState<boolean>(false);
@@ -91,7 +91,7 @@ const Profile = () => {
     }
     navigation.navigate("index");
   };
-  console.log(uri);
+
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={styles.container}>

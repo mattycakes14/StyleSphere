@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Button,
   Image,
   TextInput,
-  Touchable,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { db } from "@/config/firebase";
 import { collection, getDocs, query, where, getDoc } from "firebase/firestore";
@@ -19,7 +19,7 @@ import { Calendar, CalendarList, Agenda } from "react-native-calendars";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import * as Location from "expo-location";
-
+import { debounce } from "lodash";
 // Declare types for querying data
 type ProfileData = {
   id: string;
@@ -44,7 +44,7 @@ function HomePage() {
   const [searchVisible, isSearchVisible] = useState(false); //state for showing search locs
   const [long, setLong] = useState<number>(); //longitude for user
   const [lat, setLat] = useState<number>(); //latitude for user
-  const [loc, setLoc] = useState<number>(); //get the default location
+  const [loc, setLoc] = useState<string>(); //get the default location
   const [newLat, setNewLat] = useState<number>();
   const [newLong, setNewLong] = useState<number>();
   //auth for userId
@@ -77,57 +77,62 @@ function HomePage() {
     fetchStylistData();
   }, []); // Dependency of [] (called once per mount)
 
-  //Google API text search for Location
+  //Google API text search for Location (debounced for resource purposes)
+  //Memoized with useCallback because of state change
   const API_ENDPOINT = "https://places.googleapis.com/v1/places:searchText";
-  const API_KEY = "API_KEY";
-  useEffect(() => {
-    const getLocations = async () => {
-      if (search.length > 0) {
-        try {
-          const response = await axios.post(
-            API_ENDPOINT,
-            {
-              textQuery: search,
-              locationBias: {
-                circle: {
-                  center: {
-                    latitude: newLat ? newLat : lat,
-                    longitude: newLong ? newLong : long,
-                  },
-                  radius: 500.0,
+  const API_KEY = "AIzaSyCJOsR3AQhlrFd9uL8Pk56bqXE3MxRN_uo";
+  const getLocations = async () => {
+    if (search.length > 0) {
+      try {
+        const response = await axios.post(
+          API_ENDPOINT,
+          {
+            textQuery: search,
+            locationBias: {
+              circle: {
+                center: {
+                  latitude: newLat ? newLat : lat,
+                  longitude: newLong ? newLong : long,
                 },
+                radius: 500.0,
               },
             },
-            {
-              headers: {
-                "Content-Type": "application/json", //request response as JSON format
-                "X-Goog-Api-Key": API_KEY,
-                //fieldmask to only get desired fields
-                "X-Goog-FieldMask": "places.formattedAddress",
-              },
-            }
-          );
-          const places = response.data.places;
-          setLocations(places);
-          if (places.length > 0) {
-            //Don't display FlatList if locations is empty
-            places.map((locations) => {
-              //handle when user selects a location
-              if (locations.formattedAddress !== search) {
-                isSearchVisible(true);
-              } else {
-                getGeoCode();
-              }
-            });
+          },
+          {
+            headers: {
+              "Content-Type": "application/json", //request response as JSON format
+              "X-Goog-Api-Key": API_KEY,
+              //fieldmask to only get desired fields
+              "X-Goog-FieldMask": "places.formattedAddress",
+            },
           }
-        } catch (err) {
-          console.error(err);
+        );
+        const places = response.data.places;
+        console.log(places);
+        setLocations(places);
+        if (places.length > 0) {
+          //Don't display FlatList if locations is empty
+          places.map((locations) => {
+            //handle when user selects a location
+            if (locations.formattedAddress !== search) {
+              isSearchVisible(true);
+            } else {
+              setLoc(locations.formattedAddress);
+              getGeoCode();
+            }
+          });
         }
+        console.log(search);
+        console.log("API request called");
+      } catch (err) {
+        console.error(err);
       }
-    };
+    }
+  };
+  //ATTEMPTED debounce function (doesn't work as intended...)
+  const memoizeGetLoc = debounce(() => {
     getLocations();
-  }, [search, lat, long]);
-
+  }, 900);
   //fetch the user default location
   const getDefaultLoc = async () => {
     try {
@@ -156,159 +161,181 @@ function HomePage() {
       const longitude = geoCoded[0].longitude;
       setNewLat(latitude);
       setNewLong(longitude);
+      console.log("Geocode Called");
     } catch (err) {
       console.error(err);
     }
   };
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <Button title="debug" onPress={getGeoCode} />
-      <View style={{ flex: 0.25 }}>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="New Location"
-          placeholderTextColor="gray"
-          value={search}
-          onChangeText={(newText) => setSearch(newText)}
-        ></TextInput>
-        <TextInput
-          style={styles.searchBar}
-          placeholder="Your Location"
-          placeholderTextColor="gray"
-          value={loc}
-          editable={false}
-        ></TextInput>
-        {searchVisible ? (
-          <FlatList
-            data={locations}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearch(item.formattedAddress);
-                  isSearchVisible(false);
-                }}
-              >
-                <View style={styles.locationSearches}>
-                  <Text>{item.formattedAddress}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            style={styles.dropdown}
-          />
-        ) : (
-          <> </>
-        )}
-      </View>
-      {stylistData && stylistData.length > 0 ? (
-        <>
-          <View style={{ flex: 1 }}>
+    <TouchableWithoutFeedback onPress={() => isSearchVisible(false)}>
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 0.25 }}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="New Location"
+            placeholderTextColor="gray"
+            value={search}
+            onChangeText={(newText) => {
+              console.log("Text change");
+              setSearch(newText);
+              memoizeGetLoc();
+            }}
+          ></TextInput>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Your Location"
+            placeholderTextColor="gray"
+            value={loc}
+            editable={false}
+          ></TextInput>
+          {searchVisible ? (
             <FlatList
-              data={stylistData}
-              keyExtractor={(item) => item.id}
+              data={locations}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   onPress={() => {
-                    setSelectedItem(item); // Set the selected item
-                    setIsModalVisible(true); // Open the modal
+                    setSearch(item.formattedAddress);
+                    isSearchVisible(false);
                   }}
                 >
-                  <View style={styles.flatListContainer}>
-                    <View style={styles.userImage}>
-                      {item.profilePic.length > 0 ? (
-                        <Image
-                          source={{ uri: item.profilePic }}
-                          style={{ width: 50, height: 50, borderRadius: 50 }}
-                        />
-                      ) : (
-                        <Image
-                          source={require("../../assets/images/user.png")}
-                        />
-                      )}
-                      <Text
-                        style={{
-                          padding: 5,
-                          fontFamily: "SFPRODISPLAYBLACKITALIC",
-                          color: "black",
-                        }}
-                      >
-                        {item.username}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 30,
-                          top: 30,
-                          marginLeft: 100,
-                          fontFamily: "SFPRODISPLAYBOLD",
-                        }}
-                      >
-                        ${item.priceRange}
-                      </Text>
-                    </View>
-                    <Text style={{ padding: 5 }}>Located: {item.address}</Text>
-                    <Text style={{ padding: 5 }}>Service: {item.service}</Text>
+                  <View style={styles.locationSearches}>
+                    <Text>{item.formattedAddress}</Text>
                   </View>
                 </TouchableOpacity>
               )}
+              style={styles.dropdown}
             />
-          </View>
-          <Button title="test" onPress={getDefaultLoc} />
-          <Modal
-            visible={isModalVisible}
-            animationType="fade"
-            transparent={true} // Enable transparency
-            onRequestClose={() => setIsModalVisible(false)}
-          >
-            <TouchableOpacity
-              style={styles.modalOverlay}
-              onPress={() => setIsModalVisible(false)} // Close modal on background tap
-            >
-              <View style={styles.modalContent}>
-                <Text style={styles.modalText}>
-                  Location: {selectedItem?.address}
-                </Text>
-                <Button
-                  title="Map to Location"
-                  onPress={() =>
-                    openMap({
-                      latitude: selectedItem?.latitude,
-                      longitude: selectedItem?.longitude,
-                    })
-                  }
-                ></Button>
-                <TouchableOpacity onPress={() => setCalendarVisible(true)}>
-                  <Text>See Availability</Text>
-                </TouchableOpacity>
-                <Modal
-                  visible={calendarVisible}
-                  transparent={true}
-                  animationType="fade"
-                >
-                  <View style={styles.calendarOverlay}>
-                    <View style={styles.calendarModal}>
-                      <TouchableOpacity
-                        onPress={() => setCalendarVisible(false)}
-                      ></TouchableOpacity>
-                      <Calendar
-                        style={{ padding: 20, width: 300, borderRadius: 10 }}
-                        onDayPress={(day) => {
-                          console.log(`selected day is ${day}%`);
-                          console.log(typeof day);
-                          setCalendarVisible(false);
-                        }}
-                      />
+          ) : (
+            <> </>
+          )}
+        </View>
+        {stylistData && stylistData.length > 0 ? (
+          <>
+            <View style={{ flex: 1 }}>
+              <FlatList
+                data={stylistData}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSelectedItem(item); // Set the selected item
+                      setIsModalVisible(true); // Open the modal
+                    }}
+                  >
+                    <View style={styles.flatListContainer}>
+                      <View style={styles.userImage}>
+                        {item.profilePic.length > 0 ? (
+                          <Image
+                            source={{ uri: item.profilePic }}
+                            style={{ width: 50, height: 50, borderRadius: 50 }}
+                          />
+                        ) : (
+                          <Image
+                            source={require("../../assets/images/user.png")}
+                          />
+                        )}
+                        <Text
+                          style={{
+                            padding: 5,
+                            fontFamily: "SFPRODISPLAYBLACKITALIC",
+                            color: "black",
+                          }}
+                        >
+                          {item.username}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 30,
+                            top: 30,
+                            marginLeft: 100,
+                            fontFamily: "SFPRODISPLAYBOLD",
+                          }}
+                        >
+                          ${item.priceRange}
+                        </Text>
+                        <Image
+                          source={require("../../assets/images/location.png")}
+                          style={{
+                            position: "absolute",
+                            width: 15,
+                            height: 15,
+                            top: 20,
+                            left: 53,
+                          }}
+                        />
+                        <Text
+                          style={{ position: "absolute", top: 20, left: 70 }}
+                        >
+                          {item.address}
+                        </Text>
+                      </View>
+
+                      <Text style={{ padding: 5 }}>
+                        Service: {item.service}
+                      </Text>
                     </View>
-                  </View>
-                </Modal>
-                <Text style={styles.modalText}>Price Range:</Text>
-                <Text style={styles.modalText}>Service:</Text>
-              </View>
-            </TouchableOpacity>
-          </Modal>
-        </>
-      ) : (
-        <Text>No Data</Text>
-      )}
-    </SafeAreaView>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+            <Modal
+              visible={isModalVisible}
+              animationType="fade"
+              transparent={true} // Enable transparency
+              onRequestClose={() => setIsModalVisible(false)}
+            >
+              <TouchableOpacity
+                style={styles.modalOverlay}
+                onPress={() => setIsModalVisible(false)} // Close modal on background tap
+              >
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalText}>
+                    Location: {selectedItem?.address}
+                  </Text>
+                  <Button
+                    title="Map to Location"
+                    onPress={() =>
+                      openMap({
+                        latitude: selectedItem?.latitude,
+                        longitude: selectedItem?.longitude,
+                      })
+                    }
+                  ></Button>
+                  <TouchableOpacity onPress={() => setCalendarVisible(true)}>
+                    <Text>See Availability</Text>
+                  </TouchableOpacity>
+                  <Modal
+                    visible={calendarVisible}
+                    transparent={true}
+                    animationType="fade"
+                  >
+                    <View style={styles.calendarOverlay}>
+                      <View style={styles.calendarModal}>
+                        <TouchableOpacity
+                          onPress={() => setCalendarVisible(false)}
+                        ></TouchableOpacity>
+                        <Calendar
+                          style={{ padding: 20, width: 300, borderRadius: 10 }}
+                          onDayPress={(day) => {
+                            console.log(`selected day is ${day}%`);
+                            console.log(typeof day);
+                            setCalendarVisible(false);
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                  <Text style={styles.modalText}>Price Range:</Text>
+                  <Text style={styles.modalText}>Service:</Text>
+                </View>
+              </TouchableOpacity>
+            </Modal>
+          </>
+        ) : (
+          <Text>No Data</Text>
+        )}
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -376,10 +403,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   locationSearches: {
-    padding: 20,
-    backgroundColor: "orange",
-    borderBottomWidth: 5,
-    borderColor: "black",
+    padding: 25,
+    backgroundColor: "white",
+    borderBottomWidth: 0.25,
+    borderColor: "gray",
   },
   dropdown: {
     position: "absolute",
@@ -387,6 +414,7 @@ const styles = StyleSheet.create({
     marginTop: 100,
     marginLeft: 50,
     marginRight: 50,
-    maxHeight: 200,
+    maxHeight: 300,
+    borderRadius: 5,
   },
 });
