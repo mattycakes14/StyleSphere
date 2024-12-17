@@ -3,7 +3,6 @@ import React from "react";
 import HomePage from "./HomePage";
 import Message from "./Message";
 import Profile from "./Profile";
-import Test from "./Test";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 

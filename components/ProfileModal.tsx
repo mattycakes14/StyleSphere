@@ -11,6 +11,11 @@ import {
   Alert,
   Button,
   Touchable,
+  KeyboardAvoidingView,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from "react-native";
 import { getAuth } from "firebase/auth";
 import { db } from "../config/firebase";
@@ -27,7 +32,7 @@ import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
 import { storage } from "../config/firebase";
 import { ref, getDownloadURL, uploadBytesResumable } from "firebase/storage";
-
+import ToastManager, { Toast } from "toastify-react-native";
 function ProfileModal({
   profileModal,
   setProfileModal,
@@ -53,6 +58,13 @@ function ProfileModal({
   const [progressModal, setProgressModal] = useState(false);
   const [uploaded, setUploaded] = useState(0);
   const email = auth.currentUser?.email;
+  //toast notification for changes
+  const showErrorToast = () => {
+    Toast.error("Changes haven't been saved! ⚠️");
+  };
+  const showSuccessToast = () => {
+    Toast.success("Changes have been saved! 🎉");
+  };
   //collection ref for AccountInfo collection
   const accountInfoRef = collection(db, "AccountInfo");
   //collection ref for Stylist Info collection
@@ -80,56 +92,56 @@ function ProfileModal({
     fetchData();
   }, [auth.currentUser?.uid]);
   //Updating/submitting info to AccountInfo/ stylistInfo collection
-  const addInfo = async () => {
-    try {
-      //reverse geocode location (address -> geocode)
-      const geoCoded = await Location.geocodeAsync(address);
-      console.log(address);
-      const latitude = geoCoded[0].latitude;
-      const longitude = geoCoded[0].longitude;
-      setLatitude(latitude);
-      setLongitude(longitude);
-      //get the user object from the collection(filter data)
-      const q = query(
-        accountInfoRef,
-        where("userId", "==", auth.currentUser?.uid)
-      );
-      const querySnapshot = await getDocs(q);
-      console.log(querySnapshot);
-      if (username.length == 0 || pronouns.length == 0 || phoneNum == null) {
-        Alert.alert(
-          "Submission error",
-          "Please fill in all the following fields correctly"
-        );
-      } else if (querySnapshot.empty) {
-        await addDoc(accountInfoRef, {
-          username: username,
-          pronouns: pronouns,
-          phoneNum: phoneNum,
-          address: address,
-          latitude: latitude,
-          longitude: longitude,
-          profilePic: url,
-          userId: auth.currentUser?.uid,
-        });
-        Alert.alert("Success", "Information submitted successfully!");
-      } else {
-        const docRef = querySnapshot.docs[0].ref;
-        await updateDoc(docRef, {
-          username: username,
-          pronouns: pronouns,
-          phoneNum: phoneNum,
-          address: address,
-          latitude: latitude,
-          profilePic: url,
-          longitude: longitude,
-        });
-        Alert.alert("Updated success!", "Info has been updated!");
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  // const addInfo = async () => {
+  //   try {
+  //     //reverse geocode location (address -> geocode)
+  //     const geoCoded = await Location.geocodeAsync(address);
+  //     console.log(address);
+  //     const latitude = geoCoded[0].latitude;
+  //     const longitude = geoCoded[0].longitude;
+  //     setLatitude(latitude);
+  //     setLongitude(longitude);
+  //     //get the user object from the collection(filter data)
+  //     const q = query(
+  //       accountInfoRef,
+  //       where("userId", "==", auth.currentUser?.uid)
+  //     );
+  //     const querySnapshot = await getDocs(q);
+  //     console.log(querySnapshot);
+  //     if (username.length == 0 || pronouns.length == 0 || phoneNum == null) {
+  //       Alert.alert(
+  //         "Submission error",
+  //         "Please fill in all the following fields correctly"
+  //       );
+  //     } else if (querySnapshot.empty) {
+  //       await addDoc(accountInfoRef, {
+  //         username: username,
+  //         pronouns: pronouns,
+  //         phoneNum: phoneNum,
+  //         address: address,
+  //         latitude: latitude,
+  //         longitude: longitude,
+  //         profilePic: url,
+  //         userId: auth.currentUser?.uid,
+  //       });
+  //       Alert.alert("Success", "Information submitted successfully!");
+  //     } else {
+  //       const docRef = querySnapshot.docs[0].ref;
+  //       await updateDoc(docRef, {
+  //         username: username,
+  //         pronouns: pronouns,
+  //         phoneNum: phoneNum,
+  //         address: address,
+  //         latitude: latitude,
+  //         profilePic: url,
+  //         longitude: longitude,
+  //       });
+  //       Alert.alert("Updated success!", "Info has been updated!");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
   const selectImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -200,6 +212,7 @@ function ProfileModal({
   return (
     <Modal transparent={true} visible={profileModal} animationType="slide">
       <SafeAreaView style={styles.modalContainer}>
+        <ToastManager width={350} />
         <View style={styles.closeContainer}>
           <TouchableOpacity onPress={() => setProfileModal(false)}>
             <Image
@@ -234,43 +247,64 @@ function ProfileModal({
         <View style={styles.accountInfoSettingContainer}>
           <Text style={styles.emailText}> Email: {email}</Text>
         </View>
-        <View style={styles.accountInfoSettingContainer}>
-          <Text style={styles.accountInfoSettingText}>Username</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(newusername) => setUsername(newusername)}
-            value={username}
-          ></TextInput>
-        </View>
-        <View style={styles.accountInfoSettingContainer}>
-          <Text style={styles.accountInfoSettingText}>Pronouns</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(newPronouns) => setPronouns(newPronouns)}
-            value={pronouns}
-          ></TextInput>
-        </View>
-        <View style={styles.accountInfoSettingContainer}>
-          <Text style={styles.accountInfoSettingText}>Phone number</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(newNum) => setPhoneNum(Number(newNum))}
-            value={String(phoneNum)}
-          ></TextInput>
-        </View>
-        <View style={styles.accountInfoSettingContainer}>
-          <Text style={styles.accountInfoSettingText}>Location</Text>
-          <TextInput
-            style={styles.textInput}
-            value={address}
-            onChangeText={(newAddress) => setAddress(newAddress)}
-          ></TextInput>
-          <View />
-        </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <ScrollView>
+              <View style={styles.accountInfoSettingContainer}>
+                <Text style={styles.accountInfoSettingText}>Username</Text>
+                <TextInput
+                  style={styles.textInput}
+                  onChangeText={(newusername) => {
+                    setUsername(newusername);
+                    showErrorToast();
+                  }}
+                  value={username}
+                ></TextInput>
+              </View>
+              <View style={styles.accountInfoSettingContainer}>
+                <Text style={styles.accountInfoSettingText}>Pronouns</Text>
+                <TextInput
+                  style={styles.textInput}
+                  onChangeText={(newPronouns) => {
+                    setPronouns(newPronouns);
+                    showErrorToast();
+                  }}
+                  value={pronouns}
+                ></TextInput>
+              </View>
+              <View style={styles.accountInfoSettingContainer}>
+                <Text style={styles.accountInfoSettingText}>Phone number</Text>
+                <TextInput
+                  style={styles.textInput}
+                  onChangeText={(newNum) => {
+                    setPhoneNum(Number(newNum));
+                    showErrorToast();
+                  }}
+                  value={String(phoneNum)}
+                ></TextInput>
+              </View>
+              <View style={styles.accountInfoSettingContainer}>
+                <Text style={styles.accountInfoSettingText}>Location</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={address}
+                  onChangeText={(newAddress) => {
+                    setAddress(newAddress);
+                    showErrorToast();
+                  }}
+                ></TextInput>
+                <View />
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
         <View style={styles.updateContainer}>
           <TouchableOpacity
             onPress={() => {
               addInfo();
+              showSuccessToast();
             }}
           >
             <Text style={styles.updateText}>Update</Text>

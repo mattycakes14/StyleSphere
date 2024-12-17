@@ -27,8 +27,11 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import { debounce } from "lodash";
+import ToastMangager, { Toast } from "toastify-react-native";
 const Profile = () => {
+  const showToasts = () => {
+    Toast.success("Yesssir");
+  };
   //visibility for stylist setting
   const [stylistVisibility, setStylistVisibility] = useState<boolean>(false);
   // screen defining (types)

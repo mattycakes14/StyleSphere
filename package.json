@@ -63,7 +63,8 @@
     "react-native-svg": "15.8.0",
     "react-native-tab-view": "^4.0.2",
     "react-native-toast-message": "^2.2.1",
-    "react-native-web": "~0.19.13"
+    "react-native-web": "~0.19.13",
+    "toastify-react-native": "^5.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
