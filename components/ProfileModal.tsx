@@ -71,6 +71,7 @@ function ProfileModal({
   const stylistRef = collection(db, "stylistInfo");
   //get pre-text username/pronouns
   useEffect(() => {
+    console.log("Data feteched");
     const fetchData = async () => {
       try {
         const q = query(
@@ -90,7 +91,7 @@ function ProfileModal({
       }
     };
     fetchData();
-  }, [auth.currentUser?.uid]);
+  }, [profileModal]);
   //Updating/submitting info to AccountInfo/ stylistInfo collection
   // const addInfo = async () => {
   //   try {
