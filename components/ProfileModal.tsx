@@ -93,56 +93,56 @@ function ProfileModal({
     fetchData();
   }, [profileModal]);
   //Updating/submitting info to AccountInfo/ stylistInfo collection
-  // const addInfo = async () => {
-  //   try {
-  //     //reverse geocode location (address -> geocode)
-  //     const geoCoded = await Location.geocodeAsync(address);
-  //     console.log(address);
-  //     const latitude = geoCoded[0].latitude;
-  //     const longitude = geoCoded[0].longitude;
-  //     setLatitude(latitude);
-  //     setLongitude(longitude);
-  //     //get the user object from the collection(filter data)
-  //     const q = query(
-  //       accountInfoRef,
-  //       where("userId", "==", auth.currentUser?.uid)
-  //     );
-  //     const querySnapshot = await getDocs(q);
-  //     console.log(querySnapshot);
-  //     if (username.length == 0 || pronouns.length == 0 || phoneNum == null) {
-  //       Alert.alert(
-  //         "Submission error",
-  //         "Please fill in all the following fields correctly"
-  //       );
-  //     } else if (querySnapshot.empty) {
-  //       await addDoc(accountInfoRef, {
-  //         username: username,
-  //         pronouns: pronouns,
-  //         phoneNum: phoneNum,
-  //         address: address,
-  //         latitude: latitude,
-  //         longitude: longitude,
-  //         profilePic: url,
-  //         userId: auth.currentUser?.uid,
-  //       });
-  //       Alert.alert("Success", "Information submitted successfully!");
-  //     } else {
-  //       const docRef = querySnapshot.docs[0].ref;
-  //       await updateDoc(docRef, {
-  //         username: username,
-  //         pronouns: pronouns,
-  //         phoneNum: phoneNum,
-  //         address: address,
-  //         latitude: latitude,
-  //         profilePic: url,
-  //         longitude: longitude,
-  //       });
-  //       Alert.alert("Updated success!", "Info has been updated!");
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // };
+  const addInfo = async () => {
+    try {
+      //reverse geocode location (address -> geocode)
+      const geoCoded = await Location.geocodeAsync(address);
+      console.log(address);
+      const latitude = geoCoded[0].latitude;
+      const longitude = geoCoded[0].longitude;
+      setLatitude(latitude);
+      setLongitude(longitude);
+      //get the user object from the collection(filter data)
+      const q = query(
+        accountInfoRef,
+        where("userId", "==", auth.currentUser?.uid)
+      );
+      const querySnapshot = await getDocs(q);
+      console.log(querySnapshot);
+      if (username.length == 0 || pronouns.length == 0 || phoneNum == null) {
+        Alert.alert(
+          "Submission error",
+          "Please fill in all the following fields correctly"
+        );
+      } else if (querySnapshot.empty) {
+        await addDoc(accountInfoRef, {
+          username: username,
+          pronouns: pronouns,
+          phoneNum: phoneNum,
+          address: address,
+          latitude: latitude,
+          longitude: longitude,
+          profilePic: url,
+          userId: auth.currentUser?.uid,
+        });
+        Alert.alert("Success", "Information submitted successfully!");
+      } else {
+        const docRef = querySnapshot.docs[0].ref;
+        await updateDoc(docRef, {
+          username: username,
+          pronouns: pronouns,
+          phoneNum: phoneNum,
+          address: address,
+          latitude: latitude,
+          profilePic: url,
+          longitude: longitude,
+        });
+        Alert.alert("Updated success!", "Info has been updated!");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const selectImage = async () => {
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();

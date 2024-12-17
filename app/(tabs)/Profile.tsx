@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Button,
   View,
@@ -12,6 +12,8 @@ import {
   ScrollView,
   FlatList,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -25,13 +27,16 @@ import {
   getDocs,
   where,
   onSnapshot,
+  addDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import ToastMangager, { Toast } from "toastify-react-native";
+import DropDownPicker from "react-native-dropdown-picker";
+import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet";
+import { setEnabled } from "react-native/Libraries/Performance/Systrace";
 const Profile = () => {
-  const showToasts = () => {
-    Toast.success("Yesssir");
-  };
+  const sheetRef = useRef<BottomSheetMethods>(null);
+  const sheetRef2 = useRef<BottomSheetMethods>(null);
   //visibility for stylist setting
   const [stylistVisibility, setStylistVisibility] = useState<boolean>(false);
   // screen defining (types)
@@ -46,7 +51,10 @@ const Profile = () => {
   const [profilePic, hasProfilePic] = useState(false);
   const data = [
     { id: 1, category: "Adjust Stylist Info" },
-    { id: 2, category: "Logout" },
+    { id: 2, category: "Stylist Description Information" },
+    { id: 3, category: "Your Reviews" },
+    { id: 4, category: "Settings" },
+    { id: 5, category: "Logout" },
   ];
   const [uri, setUri] = useState("");
   //collection ref
@@ -84,7 +92,7 @@ const Profile = () => {
       }
     });
     return () => unsubscribe(); //clean up function: component unmounts we stop the listener
-  }, [userId]); //clean up listener and update doc data based on userId
+  }, []); //clean up listener and update doc data based on userId
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -94,7 +102,6 @@ const Profile = () => {
     }
     navigation.navigate("index");
   };
-
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={styles.container}>
@@ -132,18 +139,20 @@ const Profile = () => {
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => {
-                item.category === "Logout"
-                  ? Alert.alert("Log Out", "Are you sure you want to logout?", [
-                      {
-                        text: "LogOut",
-                        onPress: handleLogout,
-                      },
-                      {
-                        text: "Cancel",
-                        onPress: () => console.log("cancel log out tab"),
-                      },
-                    ])
-                  : console.log(item.category);
+                if (item.category === "Logout") {
+                  Alert.alert("Log Out", "Are you sure you want to logout?", [
+                    {
+                      text: "LogOut",
+                      onPress: handleLogout,
+                    },
+                    {
+                      text: "Cancel",
+                      onPress: () => console.log("cancel log out tab"),
+                    },
+                  ]);
+                } else {
+                  sheetRef.current?.open();
+                }
               }}
             >
               <View style={styles.stylistInfoContainer}>
@@ -153,10 +162,132 @@ const Profile = () => {
           )}
         />
       </SafeAreaView>
+      <BottomSheet
+        children={stylistInfo}
+        height="40%"
+        ref={sheetRef}
+      ></BottomSheet>
     </GestureHandlerRootView>
   );
 };
 
+const stylistInfo = () => {
+  const [updated, isUpdated] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(null);
+  const [items, setItems] = useState([
+    { label: "Barber Services", value: "1" },
+    { label: "Fades and Tapers", value: "Fades and Tapers", parent: "1" },
+    {
+      label: "Line-up(Hairline/beard)",
+      value: "Line-up(Hairline/beard)",
+      parent: "1",
+    },
+
+    { label: "Hair Styling Services", value: "2" },
+    {
+      label: "Hair Extensions (Clip-In, Tape-In, Sew-In)",
+      value: "Hair Extensions (Clip-In, Tape-In, Sew-In)",
+      parent: "2",
+    },
+    {
+      label: "Braiding (Box Braids, Cornrows, etc.)",
+      value: "Braiding (Box Braids, Cornrows, etc.)",
+      parent: "2",
+    },
+
+    { label: "Lash Services", value: "3" },
+    { label: "Lash Extensions", value: "Lash Extensions", parent: "3" },
+    { label: "Lash Lifts", value: "Lash Lifts", parent: "3" },
+
+    { label: "Nail services", value: "4" },
+    {
+      label: "Manicures (Regular, Gel, Dip Powder)",
+      value: "Manicures (Regular, Gel, Dip Powder)",
+      parent: "4",
+    },
+    { label: "Acrylic Nails", value: "Acrylic Nails", parent: "4" },
+  ]);
+  const [desc, setDesc] = useState("");
+  const [selectedItem, setSelectedItem] = useState([]);
+
+  //function to handle selected item
+  const handleSelection = (item) => {
+    setSelectedItem(item);
+  };
+  const addStylistInfo = async () => {
+    const userId = getAuth().currentUser?.uid;
+    const collectionRef = collection(db, "AccountInfo");
+    const q = query(collectionRef, where("userId", "==", userId));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const docRef = snapshot.docs[0].ref;
+      await updateDoc(docRef, {
+        stylistInfo: selectedItem,
+      });
+      console.log("Update executed");
+    } else {
+      console.log("No document found");
+    }
+  };
+  return (
+    <View>
+      <Text style={{ fontFamily: "SFPRODISPLAYBOLD" }}>
+        Which service best suits you?
+      </Text>
+      <DropDownPicker
+        open={open}
+        value={value}
+        items={items}
+        setOpen={setOpen}
+        setValue={setValue}
+        setItems={setItems}
+        placeholder={"Select a service"}
+        multiple={true}
+        min={0}
+        max={5}
+        onChangeValue={(item) => {
+          handleSelection(item);
+          isUpdated(false);
+        }}
+        categorySelectable={false} // Prevents selecting the category itself
+      />
+      {updated ? (
+        <View>
+          <Text style={{ color: "green" }}>Changes have been Saved!</Text>
+        </View>
+      ) : (
+        <View>
+          <Text style={{ color: "red" }}>Info hasn't been saved!</Text>
+        </View>
+      )}
+      <TouchableOpacity
+        style={{
+          backgroundColor: "black",
+          width: 90,
+          borderRadius: 5,
+          marginLeft: 140,
+          marginTop: 70,
+        }}
+        onPress={() => {
+          addStylistInfo();
+          isUpdated(true);
+        }}
+      >
+        <Text
+          style={{
+            color: "white",
+            marginLeft: 10,
+            padding: 3,
+            fontSize: 30,
+          }}
+        >
+          Save
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
 const styles = StyleSheet.create({
   container: {
     flex: 1,

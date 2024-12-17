@@ -29,7 +29,7 @@ type ProfileData = {
   phoneNum: number;
   pronouns: string;
   username: string;
-  service: string;
+  service: string[];
   priceRange: number;
   profilePic: string;
 };
@@ -37,7 +37,7 @@ type ProfileData = {
 function HomePage() {
   const [stylistData, setStylistData] = useState<ProfileData[]>([]); // data for FlatList
   const [isModalVisible, setIsModalVisible] = useState(false); //modal for FlatList item
-  const [selectedItem, setSelectedItem] = useState<ProfileData | null>(null); //data for modal
+  const [selectedItem, setSelectedItem] = useState<ProfileData[]>([]); //data for modal
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [search, setSearch] = useState(""); //state for text in location search
   const [locations, setLocations] = useState([]); //list of locations from Google API
@@ -65,7 +65,7 @@ function HomePage() {
           phoneNum: doc.data().phoneNum,
           pronouns: doc.data().pronouns,
           address: doc.data().address,
-          service: doc.data().service,
+          service: doc.data().stylistInfo,
           priceRange: doc.data().priceRange,
           profilePic: doc.data().profilePic,
         }));
@@ -220,6 +220,7 @@ function HomePage() {
                     onPress={() => {
                       setSelectedItem(item); // Set the selected item
                       setIsModalVisible(true); // Open the modal
+                      console.log(item);
                     }}
                   >
                     <View style={styles.flatListContainer}>
@@ -243,16 +244,6 @@ function HomePage() {
                         >
                           {item.username}
                         </Text>
-                        <Text
-                          style={{
-                            fontSize: 30,
-                            top: 30,
-                            marginLeft: 100,
-                            fontFamily: "SFPRODISPLAYBOLD",
-                          }}
-                        >
-                          ${item.priceRange}
-                        </Text>
                         <Image
                           source={require("../../assets/images/location.png")}
                           style={{
@@ -269,10 +260,6 @@ function HomePage() {
                           {item.address}
                         </Text>
                       </View>
-
-                      <Text style={{ padding: 5 }}>
-                        Service: {item.service}
-                      </Text>
                     </View>
                   </TouchableOpacity>
                 )}
@@ -289,9 +276,22 @@ function HomePage() {
                 onPress={() => setIsModalVisible(false)} // Close modal on background tap
               >
                 <View style={styles.modalContent}>
-                  <Text style={styles.modalText}>
-                    Location: {selectedItem?.address}
-                  </Text>
+                  {selectedItem?.profilePic ? (
+                    <View
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                    >
+                      <Image
+                        source={{ uri: selectedItem?.profilePic }}
+                        style={{ width: 65, height: 65, borderRadius: 50 }}
+                      />
+                      <Text>{selectedItem?.username}</Text>
+                    </View>
+                  ) : (
+                    <Image source={require("../../assets/images/user.png")} />
+                  )}
+                  <View>
+                    <Text>Description: </Text>
+                  </View>
                   <Button
                     title="Map to Location"
                     onPress={() =>
@@ -301,32 +301,6 @@ function HomePage() {
                       })
                     }
                   ></Button>
-                  <TouchableOpacity onPress={() => setCalendarVisible(true)}>
-                    <Text>See Availability</Text>
-                  </TouchableOpacity>
-                  <Modal
-                    visible={calendarVisible}
-                    transparent={true}
-                    animationType="fade"
-                  >
-                    <View style={styles.calendarOverlay}>
-                      <View style={styles.calendarModal}>
-                        <TouchableOpacity
-                          onPress={() => setCalendarVisible(false)}
-                        ></TouchableOpacity>
-                        <Calendar
-                          style={{ padding: 20, width: 300, borderRadius: 10 }}
-                          onDayPress={(day) => {
-                            console.log(`selected day is ${day}%`);
-                            console.log(typeof day);
-                            setCalendarVisible(false);
-                          }}
-                        />
-                      </View>
-                    </View>
-                  </Modal>
-                  <Text style={styles.modalText}>Price Range:</Text>
-                  <Text style={styles.modalText}>Service:</Text>
                 </View>
               </TouchableOpacity>
             </Modal>
@@ -344,7 +318,7 @@ export default HomePage;
 const styles = StyleSheet.create({
   flatListContainer: {
     flex: 1,
-    backgroundColor: "#f98181",
+    backgroundColor: "white",
     height: 140,
     borderRadius: 5,
     marginBottom: 10,
@@ -364,7 +338,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "white", // Solid background for the modal content
     borderRadius: 10,
-    alignItems: "center",
   },
   modalText: {
     fontSize: 16,

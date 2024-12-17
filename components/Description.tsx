@@ -22,7 +22,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 
-function StylistModal({
+function Description({
   stylistVisibility,
   setStylistVisibility,
 }: {
@@ -169,4 +169,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StylistModal;
+export default Description;
