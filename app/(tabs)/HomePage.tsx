@@ -14,16 +14,28 @@ import {
   ScrollView,
   Platform,
   KeyboardAvoidingView,
+  Keyboard,
+  Alert,
 } from "react-native";
 import { db } from "@/config/firebase";
-import { collection, getDocs, query, where, getDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  addDoc,
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import * as Location from "expo-location";
 import { debounce } from "lodash";
+import { FontAwesome } from "@expo/vector-icons"; // For star icons, install with: expo install @expo/vector-icons
+
 // Declare types for querying data
 type ProfileData = {
   id: string;
+  userId: string;
   address: string;
   latitude: number;
   longitude: number;
@@ -49,6 +61,9 @@ function HomePage() {
   const [newLat, setNewLat] = useState<number>();
   const [newLong, setNewLong] = useState<number>();
   const [review, setReview] = useState("");
+  const [reviewModal, setReviewModal] = useState(false);
+  const [stars, setStars] = useState(0);
+  const [reviewee, setReviewee] = useState("");
   //auth for userId
   const userId = getAuth().currentUser?.uid;
   // Reference to collection
@@ -61,6 +76,7 @@ function HomePage() {
         const convertData = querySnapshot.docs.map((doc) => ({
           //for each doc snapshot, set the key to corresponding field vals
           id: doc.id,
+          userId: doc.data().userId,
           username: doc.data().username,
           latitude: doc.data().latitude,
           longitude: doc.data().longitude,
@@ -169,6 +185,37 @@ function HomePage() {
       console.error(err);
     }
   };
+  const handleRating = (starId: number) => {
+    setStars(starId);
+  };
+  const sendReview = async () => {
+    const collectionRef = collection(db, "Reviews");
+    try {
+      const findDoc = query(collectionRef, where("reviewUserId", "==", userId));
+      const snapshot = await getDocs(findDoc);
+      if (!snapshot.empty) {
+        const docRef = snapshot.docs[0].ref;
+        await updateDoc(docRef, {
+          review: review,
+          reviewUserId: userId,
+          revieweeuserId: reviewee,
+          stars: stars,
+        });
+      } else {
+        addDoc(collectionRef, {
+          review: review,
+          reviewUserId: userId,
+          revieweeuserId: reviewee,
+          stars: stars,
+        });
+      }
+      setReview("");
+      setStars(1);
+      Alert.alert("Review submitted!", "Thank you for submitting a review!");
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <TouchableWithoutFeedback onPress={() => isSearchVisible(false)}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -222,6 +269,7 @@ function HomePage() {
                   <TouchableOpacity
                     onPress={() => {
                       setSelectedItem(item); // Set the selected item
+                      setReviewee(selectedItem.userId);
                       setIsModalVisible(true); // Open the modal
                       console.log(item);
                     }}
@@ -320,12 +368,91 @@ function HomePage() {
                       <Text>N/A</Text>
                     )}
                     <View style={{ marginTop: 40 }}></View>
-                    <TouchableOpacity>
-                      <View>
-                        <Text>Like the stylist? Leave a review!</Text>
-                      </View>
+                    <TouchableOpacity onPress={() => setReviewModal(true)}>
+                      <Text>Like the stylist? Leave a review!</Text>
                     </TouchableOpacity>
                   </ScrollView>
+                  <Modal
+                    visible={reviewModal}
+                    transparent={true}
+                    animationType="fade"
+                  >
+                    <View style={styles.revieWModalOverlay}>
+                      <TouchableWithoutFeedback
+                        onPress={() => Keyboard.dismiss()}
+                      >
+                        <View style={styles.reviewModalContent}>
+                          <TouchableOpacity
+                            onPress={() => setReviewModal(false)}
+                          >
+                            <Image
+                              source={require("../../assets/images/close.png")}
+                              style={{
+                                width: 20,
+                                height: 20,
+                                left: -30,
+                                top: -40,
+                              }}
+                            />
+                          </TouchableOpacity>
+                          <View style={{ flexDirection: "row" }}>
+                            {[1, 2, 3, 4, 5].map((starId) => (
+                              <TouchableOpacity
+                                key={starId}
+                                onPress={() => handleRating(starId)}
+                              >
+                                <FontAwesome
+                                  style={{ padding: 2 }}
+                                  name="star"
+                                  size={20}
+                                  color={
+                                    starId <= stars ? "#FFD700" : "#D3D3D3"
+                                  }
+                                ></FontAwesome>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                          <Text>{review.length} of max 100 character</Text>
+                          <TextInput
+                            style={{
+                              borderWidth: 0.5,
+                              width: 210,
+                              height: 100,
+                              marginTop: 20,
+                            }}
+                            multiline
+                            numberOfLines={4}
+                            placeholder="Leave a review!"
+                            placeholderTextColor="gray"
+                            onChangeText={(newText) => {
+                              if (newText.length <= 100) {
+                                setReview(newText);
+                              }
+                            }}
+                            value={review}
+                          />
+                        </View>
+                      </TouchableWithoutFeedback>
+                      <TouchableOpacity
+                        style={{
+                          top: -40,
+                          backgroundColor: "black",
+                          borderRadius: 5,
+                        }}
+                        onPress={() => sendReview()}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontFamily: "SFPRODISPLAYBOLD",
+                            padding: 5,
+                          }}
+                        >
+                          Submit
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </Modal>
                 </View>
               </View>
             </Modal>
@@ -414,5 +541,16 @@ const styles = StyleSheet.create({
     marginRight: 50,
     maxHeight: 300,
     borderRadius: 5,
+  },
+  revieWModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reviewModalContent: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 60,
   },
 });
