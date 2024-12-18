@@ -11,11 +11,12 @@ import {
   Image,
   TextInput,
   TouchableWithoutFeedback,
+  ScrollView,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { db } from "@/config/firebase";
 import { collection, getDocs, query, where, getDoc } from "firebase/firestore";
-import openMap from "react-native-open-maps";
-import { Calendar, CalendarList, Agenda } from "react-native-calendars";
 import { getAuth } from "firebase/auth";
 import axios from "axios";
 import * as Location from "expo-location";
@@ -32,13 +33,13 @@ type ProfileData = {
   service: string[];
   priceRange: number;
   profilePic: string;
+  description: string;
 };
 
 function HomePage() {
   const [stylistData, setStylistData] = useState<ProfileData[]>([]); // data for FlatList
   const [isModalVisible, setIsModalVisible] = useState(false); //modal for FlatList item
   const [selectedItem, setSelectedItem] = useState<ProfileData[]>([]); //data for modal
-  const [calendarVisible, setCalendarVisible] = useState(false);
   const [search, setSearch] = useState(""); //state for text in location search
   const [locations, setLocations] = useState([]); //list of locations from Google API
   const [searchVisible, isSearchVisible] = useState(false); //state for showing search locs
@@ -47,6 +48,7 @@ function HomePage() {
   const [loc, setLoc] = useState<string>(); //get the default location
   const [newLat, setNewLat] = useState<number>();
   const [newLong, setNewLong] = useState<number>();
+  const [review, setReview] = useState("");
   //auth for userId
   const userId = getAuth().currentUser?.uid;
   // Reference to collection
@@ -68,6 +70,7 @@ function HomePage() {
           service: doc.data().stylistInfo,
           priceRange: doc.data().priceRange,
           profilePic: doc.data().profilePic,
+          description: doc.data().description,
         }));
         setStylistData(convertData); //update FlatList data
       } catch (error) {
@@ -271,11 +274,14 @@ function HomePage() {
               transparent={true} // Enable transparency
               onRequestClose={() => setIsModalVisible(false)}
             >
-              <TouchableOpacity
-                style={styles.modalOverlay}
-                onPress={() => setIsModalVisible(false)} // Close modal on background tap
-              >
+              <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
+                  <TouchableOpacity onPress={() => setIsModalVisible(false)}>
+                    <Image
+                      source={require("../../assets/images/close.png")}
+                      style={{ width: 25, height: 25 }}
+                    />
+                  </TouchableOpacity>
                   {selectedItem?.profilePic ? (
                     <View
                       style={{ justifyContent: "center", alignItems: "center" }}
@@ -284,25 +290,44 @@ function HomePage() {
                         source={{ uri: selectedItem?.profilePic }}
                         style={{ width: 65, height: 65, borderRadius: 50 }}
                       />
-                      <Text>{selectedItem?.username}</Text>
+                      <Text style={{ fontFamily: "SFPRODISPLAYBLACKITALIC" }}>
+                        {selectedItem?.username}
+                      </Text>
                     </View>
                   ) : (
                     <Image source={require("../../assets/images/user.png")} />
                   )}
-                  <View>
-                    <Text>Description: </Text>
-                  </View>
-                  <Button
-                    title="Map to Location"
-                    onPress={() =>
-                      openMap({
-                        latitude: selectedItem?.latitude,
-                        longitude: selectedItem?.longitude,
-                      })
-                    }
-                  ></Button>
+                  <ScrollView>
+                    <View style={{ marginTop: 20 }}>
+                      <Text>{selectedItem?.description}</Text>
+                    </View>
+                    <View
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                    >
+                      <Text style={{ fontFamily: "SFPRODISPLAYBLACKITALIC" }}>
+                        Services
+                      </Text>
+                    </View>
+                    {selectedItem.service ? (
+                      <View>
+                        {selectedItem?.service.map((item, index) => (
+                          <View key={index} style={{ marginTop: 20 }}>
+                            <Text>{item}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : (
+                      <Text>N/A</Text>
+                    )}
+                    <View style={{ marginTop: 40 }}></View>
+                    <TouchableOpacity>
+                      <View>
+                        <Text>Like the stylist? Leave a review!</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </ScrollView>
                 </View>
-              </TouchableOpacity>
+              </View>
             </Modal>
           </>
         ) : (

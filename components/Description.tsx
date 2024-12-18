@@ -8,7 +8,8 @@ import {
   StyleSheet,
   SafeAreaView,
   Image,
-  Touchable,
+  TouchableWithoutFeedback,
+  Keyboard,
   Alert,
 } from "react-native";
 import { getAuth } from "firebase/auth";
@@ -23,16 +24,17 @@ import {
 import { db } from "../config/firebase";
 
 function Description({
-  stylistVisibility,
-  setStylistVisibility,
+  descriptionVisibility,
+  setDescriptionVisibiity,
 }: {
-  stylistVisibility: boolean;
-  setStylistVisibility: React.Dispatch<React.SetStateAction<boolean>>;
+  descriptionVisibility: boolean;
+  setDescriptionVisibiity: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const auth = getAuth();
   //getting state of input
-  const [service, setService] = useState("");
-  const [priceRange, setPriceRange] = useState<number>();
+  const [desc, setDesc] = useState("");
+  const [char, setCharCount] = useState(0);
+  const max = 200;
   //reference to collection
   const stylistInfo = collection(db, "AccountInfo");
   //get the user id
@@ -45,8 +47,7 @@ function Description({
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const docRef = querySnapshot.docs[0].data();
-          setService(docRef.service);
-          setPriceRange(docRef.priceRange);
+          setDesc(docRef.description);
         }
       } catch (err) {
         console.error(err);
@@ -62,68 +63,58 @@ function Description({
       if (!querySnapshot.empty) {
         const docRef = querySnapshot.docs[0].ref;
         await updateDoc(docRef, {
-          service: service,
-          priceRange: priceRange,
+          description: desc,
         });
         Alert.alert("Update Success!", "Your information has been updated");
       } else {
-        await addDoc(stylistInfo, {
-          service: service,
-          priceRange: priceRange,
-          userId: userId,
-        });
-        Alert.alert(
-          "Submission Success!",
-          "Your information has been successfully submitted!"
-        );
+        console.log("No info found");
       }
     } catch (err) {
       console.error(err);
     }
   };
   return (
-    <Modal visible={stylistVisibility} animationType="fade" transparent={true}>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.modalContainer}>
-          <View style={styles.closeContainer}>
-            <TouchableOpacity onPress={() => setStylistVisibility(false)}>
-              <Image
-                style={{ width: 20, height: 20 }}
-                source={require("../assets/images/close.png")}
-              ></Image>
-            </TouchableOpacity>
+    <Modal
+      visible={descriptionVisibility}
+      animationType="fade"
+      transparent={true}
+    >
+      <TouchableWithoutFeedback
+        onPress={() => {
+          setDescriptionVisibiity(false);
+          Keyboard.dismiss();
+        }}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.modalContainer}>
+            <View style={styles.textContainer}>
+              <Text>{desc.length} of 200 max characters</Text>
+              <TextInput
+                style={styles.textInputStyle}
+                placeholder="Add description here"
+                placeholderTextColor="gray"
+                multiline
+                numberOfLines={5}
+                value={desc}
+                onChangeText={(newText) => {
+                  setCharCount(newText.length);
+                  if (newText.length < max) {
+                    setDesc(newText);
+                  }
+                }}
+              ></TextInput>
+            </View>
+            <View style={styles.submitContainer}>
+              <TouchableOpacity onPress={submitStylistInfo}>
+                <Text style={styles.submitText}>Submit </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.textContainer}>
-            <TextInput
-              style={styles.textInputStyle}
-              placeholder="service"
-              placeholderTextColor="gray"
-              onChangeText={(newService) => setService(newService)}
-              value={service}
-            ></TextInput>
-          </View>
-          <View style={styles.textContainer}>
-            <TextInput
-              style={styles.textInputStyle}
-              placeholder="Price range"
-              placeholderTextColor="gray"
-              onChangeText={(newPriceRange) =>
-                setPriceRange(Number(newPriceRange))
-              }
-              value={String(priceRange)} //change number to String
-            ></TextInput>
-          </View>
-          <View style={styles.submitContainer}>
-            <TouchableOpacity onPress={submitStylistInfo}>
-              <Text style={styles.submitText}>Submit </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   closeContainer: {
     position: "absolute",
@@ -151,6 +142,7 @@ const styles = StyleSheet.create({
     width: 230,
     borderRadius: 5,
     padding: 10,
+    height: 200,
   },
   textContainer: {
     marginTop: 20,
@@ -159,11 +151,12 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_24pt-BoldItalic",
     padding: 10,
     textAlign: "center",
+    color: "white",
   },
   submitContainer: {
     marginTop: 20,
     marginBottom: 20,
-    backgroundColor: "#F9F6EE",
+    backgroundColor: "black",
     borderRadius: 10,
     width: 80,
   },

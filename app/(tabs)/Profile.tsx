@@ -33,12 +33,14 @@ import {
 import { db } from "@/config/firebase";
 import DropDownPicker from "react-native-dropdown-picker";
 import BottomSheet, { BottomSheetMethods } from "@devvie/bottom-sheet";
-import { setEnabled } from "react-native/Libraries/Performance/Systrace";
+import Description from "@/components/Description";
+import Review from "@/components/Review";
 const Profile = () => {
   const sheetRef = useRef<BottomSheetMethods>(null);
   const sheetRef2 = useRef<BottomSheetMethods>(null);
   //visibility for stylist setting
-  const [stylistVisibility, setStylistVisibility] = useState<boolean>(false);
+  const [descriptionVisibility, setDescriptionVisibility] =
+    useState<boolean>(false);
   // screen defining (types)
   type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
   const navigation = useNavigation<NavigationProp>();
@@ -49,6 +51,7 @@ const Profile = () => {
   const [profileModal, setProfileModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [profilePic, hasProfilePic] = useState(false);
+  const [review, setReview] = useState(false);
   const data = [
     { id: 1, category: "Adjust Stylist Info" },
     { id: 2, category: "Stylist Description Information" },
@@ -134,6 +137,11 @@ const Profile = () => {
           profileModal={profileModal}
           setProfileModal={setProfileModal}
         ></ProfileModal>
+        <Description
+          descriptionVisibility={descriptionVisibility}
+          setDescriptionVisibiity={setDescriptionVisibility}
+        ></Description>
+        <Review review={review} setReview={setReview}></Review>
         <FlatList
           data={data}
           renderItem={({ item }) => (
@@ -150,6 +158,12 @@ const Profile = () => {
                       onPress: () => console.log("cancel log out tab"),
                     },
                   ]);
+                } else if (
+                  item.category === "Stylist Description Information"
+                ) {
+                  setDescriptionVisibility(true);
+                } else if (item.category === "Your Reviews") {
+                  setReview(true);
                 } else {
                   sheetRef.current?.open();
                 }
