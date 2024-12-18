@@ -60,8 +60,10 @@ const Profile = () => {
     { id: 5, category: "Logout" },
   ];
   const [uri, setUri] = useState("");
-  //collection ref
+  //reference to AccountInfo
   const accountInfo = collection(db, "AccountInfo");
+  //reference to review
+  const reviewInfo = collection(db, "Reviews");
   //update state of username by filtering docs and getting username field val
   useEffect(() => {
     const fetchUsername = async () => {
@@ -105,6 +107,7 @@ const Profile = () => {
     }
     navigation.navigate("index");
   };
+
   return (
     <GestureHandlerRootView>
       <SafeAreaView style={styles.container}>

@@ -205,7 +205,7 @@ function HomePage() {
         addDoc(collectionRef, {
           review: review,
           reviewUserId: userId,
-          revieweeuserId: reviewee,
+          revieweeUserId: reviewee,
           stars: stars,
         });
       }
@@ -216,6 +216,7 @@ function HomePage() {
       console.error(err);
     }
   };
+  console.log(reviewee);
   return (
     <TouchableWithoutFeedback onPress={() => isSearchVisible(false)}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -367,10 +368,31 @@ function HomePage() {
                     ) : (
                       <Text>N/A</Text>
                     )}
-                    <View style={{ marginTop: 40 }}></View>
-                    <TouchableOpacity onPress={() => setReviewModal(true)}>
-                      <Text>Like the stylist? Leave a review!</Text>
-                    </TouchableOpacity>
+                    <View
+                      style={{
+                        marginTop: 30,
+                        left: 20,
+                      }}
+                    >
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: "black",
+                          borderRadius: 5,
+                          marginRight: 50,
+                        }}
+                        onPress={() => setReviewModal(true)}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontFamily: "SFPRODISPLAYBOLD",
+                            padding: 5,
+                          }}
+                        >
+                          Like the stylist? Leave a review!
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </ScrollView>
                   <Modal
                     visible={reviewModal}

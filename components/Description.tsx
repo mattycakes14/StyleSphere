@@ -20,6 +20,7 @@ import {
   where,
   updateDoc,
   getDocs,
+  onSnapshot,
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 
@@ -35,7 +36,7 @@ function Description({
   const [desc, setDesc] = useState("");
   const [char, setCharCount] = useState(0);
   const max = 200;
-  //reference to collection
+  //reference to stylist collection
   const stylistInfo = collection(db, "AccountInfo");
   //get the user id
   const userId = auth.currentUser?.uid;
@@ -79,14 +80,19 @@ function Description({
       animationType="fade"
       transparent={true}
     >
-      <TouchableWithoutFeedback
-        onPress={() => {
-          setDescriptionVisibiity(false);
-          Keyboard.dismiss();
-        }}
-      >
-        <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <TouchableWithoutFeedback
+          onPress={() => {
+            Keyboard.dismiss();
+          }}
+        >
           <View style={styles.modalContainer}>
+            <TouchableOpacity onPress={() => setDescriptionVisibiity(false)}>
+              <Image
+                source={require("../assets/images/close.png")}
+                style={{ width: 20, height: 20, left: -120 }}
+              />
+            </TouchableOpacity>
             <View style={styles.textContainer}>
               <Text>{desc.length} of 200 max characters</Text>
               <TextInput
@@ -110,8 +116,8 @@ function Description({
               </TouchableOpacity>
             </View>
           </View>
-        </SafeAreaView>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </SafeAreaView>
     </Modal>
   );
 }

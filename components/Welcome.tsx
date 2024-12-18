@@ -17,6 +17,7 @@ function Welcome() {
   const [location, setLocation] = useState();
   //user permissions
 
+  //loading fonts (only have to do it once)
   let [fontsLoaded] = useFonts({
     "Inter_24pt-BoldItalic": require("../assets/fonts/Inter_24pt-BoldItalic.ttf"),
     SFPRODISPLAYBLACKITALIC: require("../assets/fonts/SFPRODISPLAYBLACKITALIC.otf"),
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
   getStartedText: {
     fontFamily: "Inter_24pt-BoldItalic",
     color: "white",
-    backgroundColor: "#ff7a7a",
+    backgroundColor: "black",
     padding: 15,
     borderRadius: 10,
   },
