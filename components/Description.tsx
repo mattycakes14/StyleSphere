@@ -94,7 +94,7 @@ function Description({
               />
             </TouchableOpacity>
             <View style={styles.textContainer}>
-              <Text>{desc.length} of 200 max characters</Text>
+              <Text>{desc?.length} of 200 max characters</Text>
               <TextInput
                 style={styles.textInputStyle}
                 placeholder="Add description here"
@@ -103,8 +103,8 @@ function Description({
                 numberOfLines={5}
                 value={desc}
                 onChangeText={(newText) => {
-                  setCharCount(newText.length);
-                  if (newText.length < max) {
+                  setCharCount(newText?.length);
+                  if (newText?.length < max) {
                     setDesc(newText);
                   }
                 }}

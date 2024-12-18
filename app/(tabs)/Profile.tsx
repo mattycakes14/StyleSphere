@@ -92,7 +92,6 @@ const Profile = () => {
           const newUri = doc.data().profilePic;
           setUri(newUri); //get the updated uri
           hasProfilePic(true);
-          console.log(uri);
         });
       }
     });
@@ -167,6 +166,8 @@ const Profile = () => {
                   setDescriptionVisibility(true);
                 } else if (item.category === "Your Reviews") {
                   setReview(true);
+                } else if (item.category === "Settings") {
+                  console.log(item.category);
                 } else {
                   sheetRef.current?.open();
                 }
